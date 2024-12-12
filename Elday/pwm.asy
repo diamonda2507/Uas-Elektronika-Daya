@@ -1,0 +1,12 @@
+Version 4
+SymbolType BLOCK
+RECTANGLE Normal -80 -40 80 40
+PIN -80 0 LEFT 8
+PINATTR PinName comp
+PINATTR SpiceOrder 1
+PIN 80 -16 RIGHT 8
+PINATTR PinName NPWM
+PINATTR SpiceOrder 2
+PIN 80 16 RIGHT 8
+PINATTR PinName PWM
+PINATTR SpiceOrder 3

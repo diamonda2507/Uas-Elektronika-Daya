@@ -1,0 +1,3 @@
+.subckt step out
+V1 out 0 PULSE(0 {A} {td} {1/SR} {1/SR} 1meg 10meg)
+.ends step

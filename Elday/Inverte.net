@@ -1,0 +1,114 @@
+* C:\Users\USER\Documents\UAS\Elday\Inverte.asc
+XX2 vga vgb vgc theta pll2
+XX1 ia ib ic theta id iq abctodq3
+XX3 vga vgb vgc theta vgd vgq abctodq3
+XX4 id N016 N014 pi_controller
+XX5 iq N029 N028 pi_controller
+XX6 N014 N018 N015 subtractor
+XX7 N019 N028 N027 adder
+XX8 N015 vgd N017 adder
+XX9 vgq N027 N022 adder
+XX10 N017 N022 theta N021 N023 N025 dqtoabc
+XX11 id N019 gain
+XX12 iq N018 gain
+XX13 N023 N024 gain
+XX14 N021 N020 gain
+XX15 N025 N026 gain
+XX18 N020 G2 G1 pwm
+XX19 N024 G4 G3 pwm
+XX20 N026 G6 G5 pwm
+V1 N001 N012 100
+V2 N012 N013 100
+R1 N003 N002 1
+R2 N006 N005 1
+R3 N010 N009 1
+L1 N003 N004 2m
+L2 N006 N007 2m
+L3 N010 N011 2m
+R4 N008 vga 1
+R§1 N008 vgb 1
+R6 N008 vgc 1
+XU1 N004 vga ia isense k=1
+XU2 N007 vgb ib isense k=1
+XU3 N011 vgc ic isense k=1
+XU4 N016 Step A=1 td=0 SR=1e8
+XU5 N029 Step A=1 td=0 SR=1e8
+M1 N001 G1 N002 N002 STW11NM80
+M2 N002 G2 N013 N013 STW11NM80
+M3 N005 G4 N013 N013 STW11NM80
+M4 N001 G3 N005 N005 STW11NM80
+M5 N001 G5 N009 N009 STW11NM80
+M6 N009 G6 N013 N013 STW11NM80
+
+* block symbol definitions
+.subckt pll2 a b c theta
+B2 alpha 0 V=(2/3)*V(a)-(1/3)*V(b)-(1/3)*V(c)
+B3 beta 0 V=(sqrt(3)/3)*V(b)-(sqrt(3)/3)*V(c)
+B4 theta 0 V=atan2(V(beta),V(alpha))
+.ends pll2
+
+.subckt abctodq3 a b c theta d q
+B1 d 0 V={cos(V(theta))*(2/3*V(a) + 1/3*V(b) + 1/3*V(c)) + sin(V(theta))*(1/(3*sqrt(3))*V(b) - 1/(3*sqrt(3))*V(c))}
+B2 q 0 V={-sin(V(theta))*(2/3*V(a) + 1/3*V(b) + 1/3*V(c)) + cos(V(theta))*(1/(3*sqrt(3))*V(b) - 1/(3*sqrt(3))*V(c))}
+.ends abctodq3
+
+.subckt pi_controller Input Ref Out
+XX1 N001 N002 gain params: K={R2/R1}
+XX2 N004 N003 integral
+XX3 N001 N004 gain params: K={1/(R1*C)}
+XX4 N002 N003 Out adder
+XX5 Ref Input N001 subtractor
+.param R1 = 1k
+.param R2 = 2.7k
+.param C = 20n
+.ends pi_controller
+
+.subckt subtractor 1 2 3
+B1 3 0 V=V(1)-V(2)
+.ends subtractor
+
+.subckt adder 1 2 3
+B1 3 0 V=V(1)+V(2)
+.ends adder
+
+.subckt dqtoabc d q theta a b c
+B1 a 0 V={(3/2)*(cos(V(theta))*V(d) - sin(V(theta))*V(q))}
+B2 b 0 V={(3/2)*(cos(V(theta) - 2*pi/3)*V(d) - sin(theta - 2*pi/3)*V(q))}
+B3 c NC_01 V={(3/2)*(cos(V(theta) + 2*pi/3)*V(d) - sin(V(theta) + 2*pi/3)*V(q))}
+.ends dqtoabc
+
+.subckt gain 1 2
+B§gain 2 0 V={K*V(1)}
+.ends gain
+
+.subckt pwm comp NPWM PWM
+V1 tri 0 PULSE(-10 10 0 {1/(2*Fs)} {1/(2*Fs)} 1n {1/(Fs)})
+B1 PWM 0 V = if(V(Tri)<V(Comp),15,0)
+B2 NPWM 0 V = if(V(Tri)>V(Comp),15,0)
+.ends pwm
+
+.subckt integral 1 2
+B1 N001 0 V={V(1)}
+B2 2 0 V={I(L1)}
+R1 N002 N001 1n
+L1 N002 0 1
+.ends integral
+
+.model NMOS NMOS
+.model PMOS PMOS
+.lib C:\Users\USER\AppData\Local\LTspice\lib\cmp\standard.mos
+.param td = 40m
+.param fs = 100k
+.tran 0.1ms
+.param R=1
+.param L=2m
+.param thetadeg=30
+.param theta=(thetadeg*pi)/180
+.param is=50
+.param id=is*cos(theta)
+.param iq=id*sin(theta)
+.param K=1
+.lib isense.lib
+.lib step.lib
+.backanno
+.end

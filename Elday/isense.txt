@@ -1,0 +1,4 @@
+.subckt isense in+ in- out
+V1 in+ in- 0
+E1 out 0 value = {k*i(V1)}
+.ends isense
